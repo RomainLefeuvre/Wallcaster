@@ -1,0 +1,31 @@
+entryPoints:
+  web:
+    address: ":80"
+    http:
+      redirections:
+        entrypoint:
+          scheme: "https"
+          to: "web-secure"
+    
+  web-secure:
+    address: ":443"
+    
+api:
+  dashboard: true
+  insecure: true
+providers:
+  file:
+    directory: "/config"
+    watch: true
+  docker:
+    endpoint: "unix:///var/run/docker.sock"
+    watch: true
+    exposedByDefault: false
+
+certificatesResolvers:
+  letsencrypt:
+    acme:
+      email: "romain.lefeuvre@inria.fr"
+      storage: "/etc/traefik/acme.json"
+      httpChallenge:
+        entryPoint: "web"
