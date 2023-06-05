@@ -1,7 +1,7 @@
 version: '3.0'
 services:
 
-   traefik:
+  traefik:
     sysctls:
     - net.ipv4.ip_unprivileged_port_start=0
     image: "traefik:v2.9"
@@ -12,8 +12,10 @@ services:
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
       - "./config/traefik:/traefik"
-
-  # Container of the backend
+    restart: "unless-stopped"
+    networks:
+      - proxy
+      
   back:
     build: ./back
     container_name: back
@@ -27,7 +29,9 @@ services:
         - ./logs.json:/usr/src/app/logs.json
     depends_on:
        - filter-processor
-
+    restart: "unless-stopped"
+    networks:
+      - proxy
   # Container of the frontend client
   front-client:
     container_name: front-client
@@ -47,6 +51,9 @@ services:
       - "traefik.http.routers.ict4s_client.tls.certresolver=letsencrypt"
       - "traefik.http.routers.ict4s_client.middlewares=ict4s_client-stripprefix"
       - "traefik.http.middlewares.ict4s_client-stripprefix.stripprefix.prefixes=/front"
+    restart: "unless-stopped"
+    networks:
+      - proxy
 
   # Container of the frontend admin
   front-admin:
@@ -67,7 +74,9 @@ services:
       - "traefik.http.routers.ict4s_admin.tls.certresolver=letsencrypt"
       - "traefik.http.routers.ict4s_admin.middlewares=ict4s_admin-stripprefix"
       - "traefik.http.middlewares.ict4s_admin-stripprefix.stripprefix.prefixes=/admin"
-
+    restart: "unless-stopped"
+    networks:
+      - proxy
 
   # Container of the filters
   filter-processor:
@@ -77,4 +86,10 @@ services:
     restart: always
     ports:
       - 5000:5000
+    restart: "unless-stopped"
+    networks:
+      - proxy
 
+networks:
+  proxy:
+    name: proxy
