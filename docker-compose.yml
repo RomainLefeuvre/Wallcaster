@@ -1,6 +1,18 @@
 version: '3.0'
 services:
 
+   traefik:
+    sysctls:
+    - net.ipv4.ip_unprivileged_port_start=0
+    image: "traefik:v2.9"
+    container_name: "reverse-proxy"
+    ports:
+      - "4430:443"
+      - "800:80"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "./config/traefik:/traefik"
+
   # Container of the backend
   back:
     build: ./back
@@ -26,6 +38,15 @@ services:
       - 80:3000
     depends_on:
       - back
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.ict4s_client.loadbalancer.server.port=80"
+      - "traefik.http.routers.ict4s_client.rule=Host(`ict4s23.irisa.fr`)"
+      - "traefik.http.routers.ict4s_client.rule=PathPrefix(`/front{regex:$$|/.*}`)"
+      - "traefik.http.routers.ict4s_client.entrypoints=web-secure"
+      - "traefik.http.routers.ict4s_client.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.ict4s_client.middlewares=ict4s_client-stripprefix"
+      - "traefik.http.middlewares.ict4s_client-stripprefix.stripprefix.prefixes=/front"
 
   # Container of the frontend admin
   front-admin:
@@ -37,6 +58,16 @@ services:
       - 3000:3000
     depends_on:
       - back
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.ict4s_admin.loadbalancer.server.port=3000"
+      - "traefik.http.routers.ict4s_admin.rule=Host(`ict4s23.irisa.fr`)"
+      - "traefik.http.routers.ict4s_admin.rule=PathPrefix(`/admin{regex:$$|/.*}`)"
+      - "traefik.http.routers.ict4s_admin.entrypoints=web-secure"
+      - "traefik.http.routers.ict4s_admin.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.ict4s_admin.middlewares=ict4s_admin-stripprefix"
+      - "traefik.http.middlewares.ict4s_admin-stripprefix.stripprefix.prefixes=/admin"
+
 
   # Container of the filters
   filter-processor:
@@ -46,3 +77,4 @@ services:
     restart: always
     ports:
       - 5000:5000
+

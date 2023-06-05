@@ -30,7 +30,7 @@ export const App = () => {
 
   const [post, setPost] = useState<Post | string | null>(null);
   const [nextPost, setNextPost] = useState<Post | string | null>(null);
-  const [serverIp, setServerIp] = useState('http://localhost:3001');
+  const [serverIp, setServerIp] = useState('https://ict4s23.irisa.fr/admin');
   let [isShowing, setIsShowing] = useState(true);
   let [, , resetIsShowing] = reactUse.useTimeoutFn(() => setIsShowing(true), 400);
   const socket = useSocket(serverIp, (socket) => {
